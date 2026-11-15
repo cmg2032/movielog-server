@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { ApiResponse } from '../common/api-response.js';
+import { ApiException } from '../exception/api.exception.js';
 
 // @Catch()에 아무것도 넣지 않으면 HttpException뿐 아니라 예상 못 한 에러(500)까지 잡습니다.
 // 그래야 "실패 응답은 항상 같은 구조"가 지켜집니다.
@@ -42,8 +43,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
       }
     }
 
-    res
-      .status(status)
-      .json(ApiResponse.fail(`COMMON${status}`, message, result));
+    // ApiException이면 직접 지정한 코드를, 그 외에는 기존 규칙(COMMON + 상태코드)을 씁니다
+    const code =
+      exception instanceof ApiException ? exception.code : `COMMON${status}`;
+
+    res.status(status).json(ApiResponse.fail(code, message, result));
   }
 }
